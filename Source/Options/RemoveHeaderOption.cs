@@ -32,9 +32,6 @@ namespace AutoHeader.Options
 
         private void RemoveHeaderFromFile(string filePath)
         {
-            var tempFilePath = GetTempFileName(filePath);
-            File.Move(filePath, tempFilePath);
-
             string header;
             using (var streamReader = new StreamReader("HeaderTemplate.txt"))
             {
@@ -42,27 +39,23 @@ namespace AutoHeader.Options
             }
 
             string fileContent;
-            using (var streamReader = new StreamReader(tempFilePath))
+            using (var streamReader = new StreamReader(filePath))
             {
                 fileContent = streamReader.ReadToEnd();
             }
 
-            fileContent = fileContent.Substring(header.Length);
-
-            using (var stream = new StreamWriter(filePath, false))
+            if (fileContent.Length >= header.Length)
             {
-                stream.Write(fileContent);
+                var fileHeader = fileContent.Substring(0, header.Length);
+                if (fileHeader == header)
+                {
+                    fileContent = fileContent.Substring(header.Length);
+                    using (var stream = new StreamWriter(filePath, false))
+                    {
+                        stream.Write(fileContent);
+                    }
+                }
             }
-            File.Delete(tempFilePath);
         }
-
-        private static string GetTempFileName(string filePath)
-        {
-            var fileName = Path.GetFileName(filePath);
-            var path = Path.GetDirectoryName(filePath) ?? string.Empty;
-            var tempFilePath = Path.Combine(path, string.Format("~{0}", fileName));
-            return tempFilePath;
-        }
-
     }
 }
